@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Auth from "../Layout/Auth/Auth";
 import Main from "../Layout/Main/Main";
-import Home from "../Pages/Dashboard/Home";
 import NotFound from "../NotFound";
 import ChangePassword from "../Pages/Auth/ChangePassword";
 import Login from "../Pages/Auth/Login";
@@ -48,7 +47,23 @@ import SubmissionManagement from "../components/submissionManagement/SubmissionM
 import UploadDocument from "../components/uploadDocuments/UploadDocument";
 import SignUp from "../Pages/Auth/SignUp";
 
+// 🔑 Simple auth check function (adjust based on your app logic)
+const isLoggedIn = () => {
+  return !!localStorage.getItem("token"); // change "token" to your auth key
+};
+
 const router = createBrowserRouter([
+  // ✅ Root redirect
+  {
+    path: "/",
+    element: isLoggedIn() ? (
+      <Navigate to="/submission-management" replace />
+    ) : (
+      <Navigate to="/auth/login" replace />
+    ),
+  },
+
+  // ====== DASHBOARD (Protected) ======
   {
     path: "/",
     element: (
@@ -57,11 +72,6 @@ const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      // Dashboard home
-      {
-        path: "/",
-        element: <Navigate to="/submission-management" replace />,
-      },
       {
         path: "/submission-management",
         element: (
