@@ -10,9 +10,6 @@ const userSlice = api.injectEndpoints({
                 return{
                     url: `/auth/get-all-user?${params.toString()}`,
                     method: "GET",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
                 }
             }
         }),
@@ -23,9 +20,6 @@ const userSlice = api.injectEndpoints({
                     url: `/user`,
                     method: "POST",
                     body:data,
-                    // headers:{
-                    //     Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    // }
                 }
             }
         })

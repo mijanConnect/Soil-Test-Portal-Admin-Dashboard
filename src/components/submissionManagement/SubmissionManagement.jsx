@@ -1,158 +1,211 @@
 import React, { useState } from "react";
-import { Table, Button, Modal, Input, Tooltip, Switch } from "antd";
+import { Table, Button, Modal, Input, Tooltip, Switch, Spin } from "antd";
 import { FaTrash } from "react-icons/fa";
 import { EyeOutlined } from "@ant-design/icons";
 import Swal from "sweetalert2";
 import { Document, Page, pdfjs } from "react-pdf";
-// Set the worker
+import {
+  useGetAllDocumentsQuery,
+  useGetDocumentForAdminQuery,
+  useUpdateDocumentStatusMutation,
+  useDeleteDocumentMutation,
+} from "../../redux/apiSlices/documentSlice";
+import { useProfileQuery } from "../../redux/apiSlices/authSlice";
+
+// PDF worker setup
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-import SoilTestReport from "../../../src/assets/soil-test-report.jpg";
 
 const SubmissionManagement = () => {
+  // API calls
+  const {
+    data,
+    isLoading,
+    isFetching,
+    refetch: refetchAdmin,
+  } = useGetAllDocumentsQuery();
+  const { data: profileData, isLoading: profileLoading } = useProfileQuery();
+  const {
+    data: adminData,
+    isLoading: adminLoading,
+    isFetching: adminFetching,
+    refetch: refetchAdminData,
+  } = useGetDocumentForAdminQuery();
+
+  const [deleteDocument, { isLoading: deleteLoading }] =
+    useDeleteDocumentMutation();
+  const [updateDocumentStatus, { isLoading: updateLoading }] =
+    useUpdateDocumentStatusMutation();
+
+  // Local state
   const [activeTab, setActiveTab] = useState("myDocuments");
   const [numPages, setNumPages] = useState(null);
-
-  const [myDocuments, setMyDocuments] = useState([
-    {
-      id: 1,
-      title: "Quantum-Entangled Communication",
-      email: "alice@email.com",
-      category: "Soil Test",
-      date: "2025-08-01",
-      status: "Active",
-      fileUrl: "/assets/dummy-pdf_2.pdf", // ✅ Use string path
-    },
-    {
-      id: 2,
-      title: "Quantum-Entangled Communication",
-      email: "alice@email.com",
-      category: "Soil Test",
-      date: "2025-08-05",
-      status: "Inactive",
-      fileUrl: SoilTestReport,
-    },
-    {
-      id: 3,
-      title: "Soil Fertility Report",
-      email: "bob@email.com",
-      category: "Agriculture",
-      date: "2025-08-10",
-      status: "Active",
-      fileUrl: "/assets/sample1.pdf",
-    },
-    {
-      id: 4,
-      title: "Groundwater Quality Analysis",
-      email: "carol@email.com",
-      category: "Water Test",
-      date: "2025-08-12",
-      status: "Inactive",
-      fileUrl: "/assets/sample2.pdf",
-    },
-    {
-      id: 5,
-      title: "Crop Yield Prediction Report",
-      email: "david@email.com",
-      category: "Research",
-      date: "2025-08-15",
-      status: "Active",
-      fileUrl: "/assets/sample3.pdf",
-    },
-  ]);
-
-  const [userDocuments, setUserDocuments] = useState([
-    {
-      id: 1,
-      title: "Quantum-Entangled Communication",
-      email: "john@email.com",
-      category: "Soil Test",
-      date: "2025-08-02",
-      status: "Active",
-      fileUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    },
-    {
-      id: 2,
-      title: "User Doc 2",
-      email: "john@email.com",
-      category: "Marketing",
-      date: "2025-08-06",
-      status: "Inactive",
-      fileUrl: SoilTestReport,
-    },
-    {
-      id: 3,
-      title: "Soil Nutrient Analysis",
-      email: "emma@email.com",
-      category: "Agriculture",
-      date: "2025-08-08",
-      status: "Active",
-      fileUrl: "https://www.africau.edu/images/default/sample.pdf",
-    },
-    {
-      id: 4,
-      title: "Pesticide Residue Report",
-      email: "liam@email.com",
-      category: "Environmental Test",
-      date: "2025-08-11",
-      status: "Inactive",
-      fileUrl: "https://unec.edu.az/application/uploads/2014/12/pdf-sample.pdf",
-    },
-  ]);
-
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
+  // Show loader while initial data loading
+  if (isLoading || profileLoading || adminLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Spin size="large" tip="Loading documents..." />
+      </div>
+    );
+  }
+
+  const myDocument = data?.data || [];
+  const allDocument = adminData?.data || [];
+
+  // Filter data by search
+  const currentData =
+    activeTab === "myDocuments"
+      ? myDocument.filter(
+          (doc) =>
+            doc.title.toLowerCase().includes(searchText.toLowerCase()) ||
+            doc.user.email.toLowerCase().includes(searchText.toLowerCase()) ||
+            (doc.category?.title || "")
+              .toLowerCase()
+              .includes(searchText.toLowerCase())
+        )
+      : allDocument.filter(
+          (doc) =>
+            doc.title.toLowerCase().includes(searchText.toLowerCase()) ||
+            doc.user.email.toLowerCase().includes(searchText.toLowerCase()) ||
+            (doc.category?.title || "")
+              .toLowerCase()
+              .includes(searchText.toLowerCase())
+        );
+
+  // Modal handlers
   const showViewModal = (record) => {
     setSelectedRecord(record);
     setIsViewModalVisible(true);
   };
-
   const handleCloseViewModal = () => {
     setIsViewModalVisible(false);
     setSelectedRecord(null);
     setNumPages(null);
   };
 
-  const currentData =
-    activeTab === "myDocuments"
-      ? myDocuments.filter(
-          (doc) =>
-            doc.title.toLowerCase().includes(searchText.toLowerCase()) ||
-            doc.email.toLowerCase().includes(searchText.toLowerCase()) ||
-            doc.category.toLowerCase().includes(searchText.toLowerCase())
-        )
-      : userDocuments.filter(
-          (doc) =>
-            doc.title.toLowerCase().includes(searchText.toLowerCase()) ||
-            doc.email.toLowerCase().includes(searchText.toLowerCase()) ||
-            doc.category.toLowerCase().includes(searchText.toLowerCase())
-        );
+  // Status update handler
+  const handleUpdateDocumentStatus = async (record, checked) => {
+    try {
+      await updateDocumentStatus({
+        id: record._id,
+        isActive: checked,
+      }).unwrap();
+      Swal.fire({
+        title: "Updated!",
+        text: `Document status changed to ${checked ? "Active" : "Inactive"}.`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      activeTab === "myDocuments" ? refetchAdmin() : refetchAdminData();
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: "Error!",
+        text: "Failed to update document status",
+        icon: "error",
+      });
+    }
+  };
 
+  // Delete handler
+  const handleDeleteDocument = async (record) => {
+    if (!record?._id) return;
+    try {
+      await deleteDocument(record._id).unwrap();
+      Swal.fire({
+        title: "Deleted!",
+        text: "Document has been deleted.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      activeTab === "myDocuments" ? refetchAdmin() : refetchAdminData();
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        title: "Error!",
+        text: "Failed to delete document",
+        icon: "error",
+      });
+    }
+  };
+
+  // Table columns
   const columns = [
-    { title: "SL", dataIndex: "id", key: "id", align: "center" },
+    {
+      title: "SL",
+      key: "index",
+      align: "center",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
     { title: "Title", dataIndex: "title", key: "title", align: "center" },
-    { title: "User E-mail", dataIndex: "email", key: "email", align: "center" },
+    {
+      title: "User",
+      key: "user",
+      align: "center",
+      render: (record) => record.user?.name || "-",
+    },
     {
       title: "Category",
-      dataIndex: "category",
       key: "category",
       align: "center",
+      render: (record) => record.category?.title || "-",
     },
-    { title: "Date", dataIndex: "date", key: "date", align: "center" },
-    { title: "Status", dataIndex: "status", key: "status", align: "center" },
+    {
+      title: "Short Description",
+      dataIndex: "sortDescription",
+      key: "sortDescription",
+      align: "center",
+    },
+    {
+      title: "Detail Description",
+      dataIndex: "detailDescription",
+      key: "detailDescription",
+      align: "center",
+    },
+    {
+      title: "Documents",
+      key: "document",
+      align: "center",
+      render: (record) => (
+        <div className="flex flex-col gap-2">
+          {record.document?.map((doc, idx) => (
+            <a
+              key={idx}
+              href={doc}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline"
+            >
+              {doc.endsWith(".pdf")
+                ? `PDF File ${idx + 1}`
+                : `Image ${idx + 1}`}
+            </a>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "isActive",
+      key: "status",
+      align: "center",
+      render: (isActive) => (isActive ? "Active" : "Inactive"),
+    },
     {
       title: "Action",
       key: "action",
       align: "center",
-      width: 100,
-      render: (_, record) => (
-        <div
-          className="flex gap-4 justify-between align-middle py-[3px] px-[15px] border border-primary rounded-md"
-          style={{ alignItems: "center" }}
-        >
-          {/* View Button */}
+      width: 150,
+      render: (record) => (
+        <div className="flex gap-4 justify-center items-center">
+          {/* View */}
           <Tooltip title="View Document">
             <button
               onClick={() => showViewModal(record)}
@@ -162,7 +215,7 @@ const SubmissionManagement = () => {
             </button>
           </Tooltip>
 
-          {/* Delete Button */}
+          {/* Delete */}
           <Tooltip title="Delete">
             <button
               onClick={() => {
@@ -175,22 +228,7 @@ const SubmissionManagement = () => {
                   cancelButtonColor: "#d33",
                   confirmButtonText: "Yes, delete it!",
                 }).then((result) => {
-                  if (result.isConfirmed) {
-                    const updateFunc =
-                      activeTab === "myDocuments"
-                        ? setMyDocuments
-                        : setUserDocuments;
-
-                    updateFunc((prev) =>
-                      prev.filter((item) => item.id !== record.id)
-                    );
-
-                    Swal.fire({
-                      title: "Deleted!",
-                      text: "Your record has been deleted.",
-                      icon: "success",
-                    });
-                  }
+                  if (result.isConfirmed) handleDeleteDocument(record);
                 });
               }}
               className="text-red-500 hover:text-red-700 text-md"
@@ -202,10 +240,7 @@ const SubmissionManagement = () => {
           {/* Status Toggle */}
           <Switch
             size="small"
-            checked={record.status === "Active"}
-            style={{
-              backgroundColor: record.status === "Active" ? "#48B14C" : "gray",
-            }}
+            checked={record.isActive}
             onChange={(checked) => {
               Swal.fire({
                 title: "Are you sure?",
@@ -218,30 +253,8 @@ const SubmissionManagement = () => {
                 cancelButtonColor: "#d33",
                 confirmButtonText: "Yes, change it!",
               }).then((result) => {
-                if (result.isConfirmed) {
-                  const updateFunc =
-                    activeTab === "myDocuments"
-                      ? setMyDocuments
-                      : setUserDocuments;
-
-                  updateFunc((prev) =>
-                    prev.map((item) =>
-                      item.id === record.id
-                        ? { ...item, status: checked ? "Active" : "Inactive" }
-                        : item
-                    )
-                  );
-
-                  Swal.fire({
-                    title: "Updated!",
-                    text: `Status has been changed to ${
-                      checked ? "Active" : "Inactive"
-                    }.`,
-                    icon: "success",
-                    timer: 1500,
-                    showConfirmButton: false,
-                  });
-                }
+                if (result.isConfirmed)
+                  handleUpdateDocumentStatus(record, checked);
               });
             }}
           />
@@ -252,31 +265,28 @@ const SubmissionManagement = () => {
 
   return (
     <div>
-      {/* Tabs and Search */}
+      {/* Tabs & Search */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <div className="flex gap-3">
           <Button
             type="primary"
             onClick={() => setActiveTab("myDocuments")}
-            className={`px-[50px] py-[20px] rounded-lg text-[16px] font-medium 
-      ${
-        activeTab === "myDocuments"
-          ? "bg-primary !text-white border-primary"
-          : "bg-white !text-secondary border-primary hover:bg-primary hover:!text-white"
-      }`}
+            className={`px-[50px] py-[20px] rounded-lg text-[16px] font-medium ${
+              activeTab === "myDocuments"
+                ? "bg-primary !text-white border-primary"
+                : "bg-white !text-secondary border-primary hover:bg-primary hover:!text-white"
+            }`}
           >
             My Documents
           </Button>
-
           <Button
             type="primary"
             onClick={() => setActiveTab("userDocuments")}
-            className={`px-[50px] py-[20px] rounded-lg text-[16px] font-medium 
-      ${
-        activeTab === "userDocuments"
-          ? "bg-primary !text-white border-primary"
-          : "bg-white !text-secondary border-primary hover:bg-primary hover:!text-white"
-      }`}
+            className={`px-[50px] py-[20px] rounded-lg text-[16px] font-medium ${
+              activeTab === "userDocuments"
+                ? "bg-primary !text-white border-primary"
+                : "bg-white !text-secondary border-primary hover:bg-primary hover:!text-white"
+            }`}
           >
             User's Documents
           </Button>
@@ -289,71 +299,113 @@ const SubmissionManagement = () => {
             onChange={(e) => setSearchText(e.target.value)}
             allowClear
             enterButton
-            className="custom-search"
           />
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <Table
-          dataSource={currentData}
-          columns={columns}
-          pagination={{ pageSize: 10 }}
-          bordered={false}
-          size="small"
-          rowClassName="custom-row"
-          className="custom-table"
-          scroll={{ x: "max-content" }}
-        />
-      </div>
+      {/*  Table */}
+      
+      <Table
+        dataSource={currentData}
+        columns={columns}
+        pagination={pagination}
+        onChange={(p) => setPagination(p)}
+        rowKey={(record) => record._id}
+        size="small"
+        loading={isFetching || adminFetching || deleteLoading || updateLoading}
+        scroll={{ x: "max-content", y: 500 }}
+        sticky
+        className="custom-table"
+      />
 
       {/* View Modal */}
       <Modal
-        visible={isViewModalVisible}
+        open={isViewModalVisible}
         onCancel={handleCloseViewModal}
-        width={1000}
+        width={900}
         footer={null}
+        centered
+        destroyOnClose
+        closeIcon={<span className="text-white text-2xl font-bold">×</span>}
       >
-        {selectedRecord?.fileUrl && (
-          <div className="mt-8">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold">{selectedRecord.title}</h3>
-              <a
-                href={selectedRecord.fileUrl}
-                download
-                className="py-1 border border-primary bg-primary hover:bg-white text-white hover:text-primary hover:border hover:border-primary transition px-8 rounded"
-              >
-                Download
-              </a>
+        {selectedRecord && (
+          <div className="flex flex-col">
+            <div className="bg-primary text-white flex justify-between items-center px-6 py-4">
+              <div>
+                <h2 className="text-xl font-semibold">
+                  {selectedRecord.title}
+                </h2>
+                <p className="text-sm mt-1">
+                  <strong>User:</strong> {selectedRecord.user?.name} |{" "}
+                  <strong>Category:</strong> {selectedRecord.category?.title}
+                </p>
+              </div>
             </div>
-            {selectedRecord.fileUrl.endsWith(".pdf") ? (
-              <div
-                style={{ height: "600px", overflow: "auto" }}
-                className="border border-primary mt-4 rounded-lg p-4"
-              >
-                <Document
-                  file={selectedRecord.fileUrl}
-                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+
+            <div className="p-6 bg-gray-50 border-b border-gray-200">
+              {selectedRecord.sortDescription && (
+                <p className="text-gray-700 mb-2">
+                  <strong>Short Description:</strong>{" "}
+                  {selectedRecord.sortDescription}
+                </p>
+              )}
+              {selectedRecord.detailDescription && (
+                <p className="text-gray-800">
+                  <strong>Detail Description:</strong>{" "}
+                  {selectedRecord.detailDescription}
+                </p>
+              )}
+            </div>
+
+            <div className="p-6 flex flex-col gap-6 max-h-[70vh] overflow-y-auto bg-white">
+              {selectedRecord.document?.map((fileUrl, idx) => (
+                <div
+                  key={idx}
+                  className="border rounded-lg p-4 flex flex-col gap-4 shadow-sm"
                 >
-                  {Array.from(new Array(numPages), (el, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      width={760}
-                    />
-                  ))}
-                </Document>
-              </div>
-            ) : (
-              <div className="border border-primary mt-4 rounded-lg p-4">
-                <img
-                  src={selectedRecord.fileUrl}
-                  alt={selectedRecord.title}
-                  className="w-full h-auto rounded-md"
-                />
-              </div>
-            )}
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-medium truncate">
+                      File {idx + 1}: {fileUrl.split("/").pop()}
+                    </h3>
+                    <a
+                      href={fileUrl}
+                      download
+                      className="py-1 px-4 rounded border border-primary bg-primary text-white hover:bg-white hover:text-primary transition"
+                    >
+                      Download
+                    </a>
+                  </div>
+
+                  {fileUrl.endsWith(".pdf") ? (
+                    <div
+                      className="border rounded-lg overflow-auto"
+                      style={{ height: "400px" }}
+                    >
+                      <Document
+                        file={fileUrl}
+                        onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                      >
+                        {Array.from(new Array(numPages), (_, index) => (
+                          <Page
+                            key={index}
+                            pageNumber={index + 1}
+                            width={800}
+                          />
+                        ))}
+                      </Document>
+                    </div>
+                  ) : (
+                    <div className="flex justify-center items-center">
+                      <img
+                        src={fileUrl}
+                        alt={selectedRecord.title}
+                        className="max-h-[400px] rounded-lg object-contain shadow-md"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </Modal>

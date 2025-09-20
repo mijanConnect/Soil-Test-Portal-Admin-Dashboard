@@ -1,41 +1,53 @@
-import { Button, message, Modal } from "antd";
+import { Button, message, Modal, Spin } from "antd";
 import JoditEditor from "jodit-react";
 import { useRef, useState } from "react";
-import GradientButton from "../../components/common/GradiantButton";
+import {
+  useGetTermsAndConditionsQuery,
+  useCreateTermsAndConditionsMutation,
+} from "../../redux/apiSlices/termsAndConditionSlice";
+import toast from "react-hot-toast";
 
 const TermsAndCondition = () => {
   const editor = useRef(null);
 
-  // Using a single state for both content and saved content
-  const [termsContent, setTermsContent] = useState(`
-    <h2 style="font-size: 24px; font-weight: bold; color: #333;">Terms & Conditions</h2>
-    <p style="font-size: 16px; color: #555;">Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use.</p><br />
-    <h3 style="font-size: 20px; font-weight: bold; color: #444;">1. General Terms</h3>
-    <p style="font-size: 16px; color: #555;">The content of the pages of this website is for your general information and use only. It is subject to change without notice.</p><br />
-    <h3 style="font-size: 20px; font-weight: bold; color: #444;">2. Privacy Policy</h3>
-    <p style="font-size: 16px; color: #555;">Your use of this website is also subject to our Privacy Policy, which is incorporated by reference.</p><br />
-    <h3 style="font-size: 20px; font-weight: bold; color: #444;">3. Disclaimer</h3>
-    <p style="font-size: 16px; color: #555;">The information contained in this website is for general information purposes only. We endeavor to keep the information up to date and correct.</p>
-`);
+  // API calls
+  const { data, isLoading } = useGetTermsAndConditionsQuery();
+  const [createTermsAndConditions] = useCreateTermsAndConditionsMutation();
 
+  // State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [termsContent, setTermsContent] = useState("");
 
-  const showModal = () => {
-    setIsModalOpen(true);
+  // Set initial content when data is fetched
+  if (!termsContent && data?.data?.length) {
+    setTermsContent(data.data.map((item) => item.content).join("<br />"));
+  }
+
+  const showModal = () => setIsModalOpen(true);
+  const handleCancel = () => setIsModalOpen(false);
+
+  const handleOk = async () => {
+    try {
+      const res = await createTermsAndConditions({
+        content: termsContent,
+        type: "terms",
+      }).unwrap();
+      if (res?.success) {
+        toast.success("Terms & Conditions updated successfully!");
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      toast.error("Failed to update Terms & Conditions!");
+      console.log(err);
+    }
   };
 
-  const handleOk = () => {
-    // When saving, just set the content to the saved state
-    setIsModalOpen(false);
-    message.success("Terms & Conditions updated successfully!");
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
+  if (isLoading)
+    return <Spin size="large" className="flex justify-center mt-10" />;
 
   return (
     <div className="p-4">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Terms & Conditions</h2>
         <Button
@@ -46,6 +58,7 @@ const TermsAndCondition = () => {
         </Button>
       </div>
 
+      {/* Display saved content */}
       <div className="saved-content mt-6 border p-6 rounded-lg bg-white">
         <div
           dangerouslySetInnerHTML={{ __html: termsContent }}
@@ -53,6 +66,7 @@ const TermsAndCondition = () => {
         />
       </div>
 
+      {/* Modal */}
       <Modal
         title="Update Terms & Conditions"
         open={isModalOpen}
@@ -81,9 +95,7 @@ const TermsAndCondition = () => {
             <JoditEditor
               ref={editor}
               value={termsContent}
-              onChange={(newContent) => {
-                setTermsContent(newContent);
-              }}
+              onChange={(newContent) => setTermsContent(newContent)}
             />
           </div>
         )}
