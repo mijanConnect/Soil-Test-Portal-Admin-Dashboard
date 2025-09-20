@@ -3,16 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IoIosLogOut } from "react-icons/io";
 import {
-  Dashboard,
-  Marchant,
   Settings,
   People,
-  SubscriptionManagement,
-  PromotionManagement,
-  SalesRep,
-  AuditLog,
-  loginCredentials,
-  Rewords,
   FileIcon,
   UploadIcon,
   CategoryIcon,
@@ -31,7 +23,6 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
 
   const showLogoutConfirm = () => setIsLogoutModalOpen(true);
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
     localStorage.removeItem("accessToken");
     setIsLogoutModalOpen(false);
     navigate("/auth/login");
@@ -170,15 +161,15 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       style={{ width: collapsed && !isMobile ? 80 : 250 }}
     >
       {/* Logo */}
-      {!collapsed && (
-        <Link
-          to={"/"}
-          className="logo-container flex items-center justify-center py-4"
-        >
-          <img src={image4} alt="logo" className="w-40 h-40" />
-        </Link>
-      )}
-      
+      {!collapsed &&
+        // <Link
+        //   to={"/"}
+        (
+          <div className="logo-container flex items-center justify-center py-4">
+            <img src={image4} alt="logo" className="w-40 h-40" />
+          </div>
+        )
+      }
 
       {/* Menu */}
       <div className="flex-1 overflow-y-auto mt-6">

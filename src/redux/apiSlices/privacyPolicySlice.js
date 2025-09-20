@@ -1,38 +1,26 @@
 import { api } from "../api/baseApi";
 
-
 const privacyPolicySlice = api.injectEndpoints({
-    endpoints: (builder)=>({
-        updatePricyPolicy: builder.mutation({
-            query: ({id,  description})=> {
-                return{
-                    url: `/privacy/update-privacy/${id}`,
-                    method: "PATCH",
-                    body: {description},
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-        privacyPolicy: builder.query({
-            query: ()=> {
-                return{
-                    url: "/privacy/get-privacy",
-                    method: "GET",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            },
-            transformResponse: ({data})=>{
-                return data
-            }
-        }),
-    })
-})
+  endpoints: (builder) => ({
+    createPrivacyPolicy: builder.mutation({
+      query: (data) => {
+        return {
+          url: `/rule/create`,
+          method: "POST",
+          body: data,
+        };
+      },
+    }),
+    getPrivacyPolicy: builder.query({
+      query: () => {
+        return {
+          url: `/rule/privacy`,
+          method: "GET",
+        };
+      },
+    }),
+  }),
+});
 
-export const {
-    useUpdatePricyPolicyMutation,
-    usePrivacyPolicyQuery
-} = privacyPolicySlice;
+export const { useCreatePrivacyPolicyMutation, useGetPrivacyPolicyQuery } =
+  privacyPolicySlice;

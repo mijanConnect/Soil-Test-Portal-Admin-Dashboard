@@ -1,38 +1,54 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import JoditEditor from "jodit-react";
-import GradientButton from "../../components/common/GradiantButton";
-import { Button, message, Modal } from "antd";
+import { Button, message, Modal, Spin } from "antd";
+import { useGetPrivacyPolicyQuery } from "../../redux/apiSlices/privacyPolicySlice";
+import { useCreateTermsAndConditionsMutation } from "../../redux/apiSlices/termsAndConditionSlice";
+import toast from "react-hot-toast";
 
 const PrivacyPolicy = () => {
   const editor = useRef(null);
 
-  // Using a single state for both content and saved content
-  const [termsContent, setTermsContent] = useState(`
-    <h1><strong>Privacy Policy</strong></h1>
-    <p>Welcome to our website. If you continue to browse and use this website, you are agreeing to comply with and be bound by the following terms and conditions of use.</p> <br />
-    <h3><strong><em>1. General Terms</em></strong></h3>
-    <p>The content of the pages of this website is for your general information and use only. It is subject to change without notice.</p><br />
-    <h3><strong><em>2. Privacy Policy</em></strong></h3>
-    <p>Your use of this website is also subject to our Privacy Policy, which is incorporated by reference.</p><br />
-    <h3><strong><em>3. Disclaimer</em></strong></h3>
-    <p>The information contained in this website is for general information purposes only. We endeavor to keep the information up to date and correct.</p>
-`);
+  const { data, isLoading, error } = useGetPrivacyPolicyQuery();
+  const [createPrivacyPolicy, { isLoading: isCreatingPrivacyPolicy }] =
+    useCreateTermsAndConditionsMutation();
 
+  const privacyPolicyData = data?.data?.[0];
+
+  // ✅ Always define hooks on top-level
+  const [termsContent, setTermsContent] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const showModal = () => {
-    setIsModalOpen(true);
+  // ✅ When API data loads, update state using useEffect
+  useEffect(() => {
+    if (privacyPolicyData?.content) {
+      setTermsContent(privacyPolicyData.content);
+    }
+  }, [privacyPolicyData]);
+
+  if (isLoading) return <Spin size="large" />;
+
+  const showModal = () => setIsModalOpen(true);
+
+  const handleOk = async () => {
+    try {
+      const res = await createPrivacyPolicy({
+        content: termsContent,
+        type: "privacy",
+      });
+      setIsModalOpen(false);
+      if (res?.data?.success) {
+        toast.success(
+          res?.data?.message || "Privacy Policy updated successfully!"
+        );
+      } else {
+        toast.error(res?.data?.message || "Failed to update Privacy Policy!");
+      }
+    } catch (error) {
+      toast.error("Failed to update Privacy Policy!");
+    }
   };
 
-  const handleOk = () => {
-    // When saving, just set the content to the saved state
-    setIsModalOpen(false);
-    message.success("Terms & Conditions updated successfully!");
-  };
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
+  const handleCancel = () => setIsModalOpen(false);
 
   return (
     <div className="p-4">
@@ -81,9 +97,7 @@ const PrivacyPolicy = () => {
             <JoditEditor
               ref={editor}
               value={termsContent}
-              onChange={(newContent) => {
-                setTermsContent(newContent);
-              }}
+              onChange={(newContent) => setTermsContent(newContent)}
             />
           </div>
         )}

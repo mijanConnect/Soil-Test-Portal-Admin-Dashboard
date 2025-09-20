@@ -10,6 +10,7 @@ import {
   message,
   Modal,
   Select,
+  Spin,
 } from "antd";
 import {
   SearchOutlined,
@@ -18,7 +19,6 @@ import {
   UnlockOutlined,
   ExclamationCircleOutlined,
   FilterOutlined,
-  MenuOutlined,
 } from "@ant-design/icons";
 
 const { Title } = Typography;
@@ -42,7 +42,6 @@ const UserManagement = () => {
 
   const loadUserData = () => {
     setLoading(true);
-
     const mockUsers = Array(50)
       .fill()
       .map((_, index) => ({
@@ -55,12 +54,14 @@ const UserManagement = () => {
         isBlocked: Math.random() > 0.8,
       }));
 
-    setUsers(mockUsers);
-    setPagination({
-      ...pagination,
-      total: mockUsers.length,
-    });
-    setLoading(false);
+    setTimeout(() => {
+      setUsers(mockUsers);
+      setPagination((prev) => ({
+        ...prev,
+        total: mockUsers.length,
+      }));
+      setLoading(false);
+    }, 800);
   };
 
   const handleTableChange = (pagination) => {
@@ -72,10 +73,8 @@ const UserManagement = () => {
       const matchesSearch =
         user.name.toLowerCase().includes(searchText.toLowerCase()) ||
         user.email.toLowerCase().includes(searchText.toLowerCase());
-
       const matchesStatus =
         statusFilter === "all" || user.status === statusFilter;
-
       return matchesSearch && matchesStatus;
     });
   };
@@ -89,15 +88,15 @@ const UserManagement = () => {
       okType: "danger",
       cancelText: "No",
       onOk() {
-        setUsers(users.filter((user) => user.id !== userId));
+        setUsers((prev) => prev.filter((user) => user.id !== userId));
         message.success("User deleted successfully");
       },
     });
   };
 
   const handleToggleBlock = (userId, currentBlockStatus) => {
-    setUsers(
-      users.map((user) =>
+    setUsers((prev) =>
+      prev.map((user) =>
         user.id === userId ? { ...user, isBlocked: !currentBlockStatus } : user
       )
     );
@@ -106,97 +105,89 @@ const UserManagement = () => {
     );
   };
 
-  // Define columns based on screen size
-  const getColumns = () => {
-    return [
-      {
-        title: "Serial",
-        dataIndex: "id",
-        key: "id",
-        width: 80,
-        align: "center",
-        render: (text, record, index) => {
-          return (pagination.current - 1) * pagination.pageSize + index + 1;
-        },
+  const getColumns = () => [
+    {
+      title: "SL",
+      dataIndex: "id",
+      key: "id",
+      align: "center",
+      width: 70,
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
+    { title: "Name", dataIndex: "name", key: "name", align: "center" },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+      align: "center",
+      responsive: ["md"],
+    },
+    {
+      title: "Phone",
+      dataIndex: "phone",
+      key: "phone",
+      align: "center",
+      responsive: ["lg"],
+    },
+    {
+      title: "Address",
+      dataIndex: "address",
+      key: "address",
+      align: "center",
+      ellipsis: true,
+      responsive: ["lg"],
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      align: "center",
+      render: (status) => {
+        let color = "blue";
+        if (status === "admin") color = "red";
+        else if (status === "vendor") color = "green";
+        return <Tag color={color}>{status.toUpperCase()}</Tag>;
       },
-      {
-        title: "Name",
-        dataIndex: "name",
-        key: "name",
-        align: "center",
-      },
-      {
-        title: "Email",
-        dataIndex: "email",
-        key: "email",
-        align: "center",
-        responsive: ["md"],
-      },
-      {
-        title: "Phone",
-        dataIndex: "phone",
-        key: "phone",
-        align: "center",
-        responsive: ["lg"],
-      },
-      {
-        title: "Address",
-        dataIndex: "address",
-        key: "address",
-        align: "center",
-        ellipsis: true,
-        responsive: ["lg"],
-      },
-      {
-        title: "Status",
-        dataIndex: "status",
-        key: "status",
-        align: "center",
-        render: (status) => {
-          let color = "blue";
-          if (status === "admin") color = "red";
-          else if (status === "vendor") color = "green";
-          return <Tag color={color}>{status.toUpperCase()}</Tag>;
-        },
-      },
-      {
-        title: "Actions",
-        key: "actions",
-        align: "center",
-        render: (_, record) => (
-          <Space wrap size="small">
-            <Button
-              type={record.isBlocked ? "dashed" : "primary"}
-              size="middle"
-              icon={record.isBlocked ? <UnlockOutlined /> : <LockOutlined />}
-              onClick={() => handleToggleBlock(record.id, record.isBlocked)}
-            >
-              {record.isBlocked ? "Unblock" : "Block"}
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      align: "center",
+      render: (_, record) => (
+        <Space wrap size="small">
+          <Button
+            type={record.isBlocked ? "dashed" : "primary"}
+            size="middle"
+            icon={record.isBlocked ? <UnlockOutlined /> : <LockOutlined />}
+            onClick={() => handleToggleBlock(record.id, record.isBlocked)}
+          >
+            {record.isBlocked ? "Unblock" : "Block"}
+          </Button>
+          <Popconfirm
+            title="Delete this user?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button danger size="middle" icon={<DeleteOutlined />}>
+              Delete
             </Button>
-            <Popconfirm
-              title="Delete this user?"
-              onConfirm={() => handleDelete(record.id)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button danger size="middle" icon={<DeleteOutlined />}>
-                Delete
-              </Button>
-            </Popconfirm>
-          </Space>
-        ),
-      },
-    ];
-  };
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
 
   return (
     <div className="w-full px-2 md:px-4 py-4">
+      {/* Header with search + filter */}
       <div className="flex w-full justify-between items-start md:items-center mb-4 gap-4">
         <Title level={4} className="m-0 text-lg md:text-xl">
           User Management
         </Title>
 
-        <div className="w-full md:w-auto flex  gap-2">
+        <div className="w-full md:w-auto flex gap-2">
           <Input
             placeholder="Search by name or email"
             prefix={<SearchOutlined />}
@@ -205,7 +196,6 @@ const UserManagement = () => {
             onChange={(e) => setSearchText(e.target.value)}
             allowClear
           />
-
           <Select
             placeholder="Filter by status"
             value={statusFilter}
@@ -221,22 +211,25 @@ const UserManagement = () => {
         </div>
       </div>
 
-      <div className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 p-1">
+      {/* Table Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <div className="bg-white rounded-lg overflow-hidden">
-          <Table
-            columns={getColumns()}
-            dataSource={getProcessedUsers()}
-            rowKey="id"
-            pagination={{
-              ...pagination,
-              size: "default",
-              showSizeChanger: true,
-            }}
-            onChange={handleTableChange}
-            loading={loading}
-            size="middle"
-            scroll={{ x: "max-content" }}
-          />
+          <Spin spinning={loading} tip="Loading users...">
+            <Table
+              columns={getColumns()}
+              dataSource={getProcessedUsers()}
+              rowKey="id"
+              pagination={{
+                ...pagination,
+                size: "default",
+                showSizeChanger: true,
+              }}
+              onChange={handleTableChange}
+              className="custom-table custom-table ant-table-thead"
+              scroll={{ x: "max-content", y: 500 }}
+              sticky
+            />
+          </Spin>
         </div>
       </div>
     </div>
