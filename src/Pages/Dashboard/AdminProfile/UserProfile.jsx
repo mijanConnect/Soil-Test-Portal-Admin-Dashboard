@@ -10,43 +10,43 @@ import {
   Avatar,
   message,
 } from "antd";
-import GradientButton from "../../../components/common/GradiantButton";
 import { UploadOutlined } from "@ant-design/icons";
-
+import {
+  useProfileQuery,
+  useUpdateProfileMutation,
+} from "../../../redux/apiSlices/authSlice";
+import toast from "react-hot-toast";
+import { Loader } from "lucide-react";
+import { getImageUrl } from "../../../components/common/imageUrl";
 const { Option } = Select;
 
 const UserProfile = () => {
   const [form] = Form.useForm();
   const [imageUrl, setImageUrl] = useState(null);
   const [fileList, setFileList] = useState([]); // State to handle file list
+  const { data, isLoading: profileLoading } = useProfileQuery();
+  const [profile, { isLoading, error }] = useUpdateProfileMutation();
 
   // Dummy data (to be used as the default data)
-  const dummyData = {
-    username: "Md Mijanur Rahman",
-    email: "mijan17634@gmail.com",
-    contact: "+8801234567890",
-    address: "1234 Main St, Springfield, USA",
-    language: "english",
-    profileImage: "https://i.ibb.co.com/Qjf2hxsf/images-2.jpg",
-  };
-
+  const userInformation = data?.data;
   useEffect(() => {
-    // Set initial values and the profile image if it exists
-    form.setFieldsValue(dummyData);
-
-    // Set the image URL and file list if a profile image exists
-    if (dummyData.profileImage) {
-      setImageUrl(dummyData.profileImage);
+    // Set initial values
+    form.setFieldsValue(userInformation);
+  
+    // Set profile image if exists
+    if (userInformation?.profile || userInformation?.image) {
+      const fullImageUrl = getImageUrl(userInformation?.profile || userInformation?.image); 
+      setImageUrl(fullImageUrl);
       setFileList([
         {
           uid: "-1",
           name: "profile.jpg",
           status: "done",
-          url: dummyData.profileImage,
+          url: fullImageUrl,
         },
       ]);
     }
-  }, [form]);
+  }, [form, userInformation]);
 
   // Clean up blob URLs when component unmounts to prevent memory leaks
   useEffect(() => {
@@ -56,38 +56,29 @@ const UserProfile = () => {
       }
     };
   }, [imageUrl]);
+  if (profileLoading) {
+    return <Loader />;
+  }
 
-  const onFinish = (values) => {
-    // Get the file object itself, not just the URL
-    const imageFile = fileList.length > 0 ? fileList[0].originFileObj : null;
 
-    console.log("Form Values on Submit:", values);
-    console.log("Image File:", imageFile); // Log the actual file object
+  const onFinish = async (values) => {
+    try {
+      const imageFile = fileList.length > 0 ? fileList[0].originFileObj : null;
+      const formData = new FormData();
+      Object.keys(values).forEach((key) => formData.append(key, values[key]));
+      if (imageFile) formData.append("image", imageFile);
 
-    // Create a FormData object for server submission with file
-    const formData = new FormData();
-    Object.keys(values).forEach((key) => {
-      formData.append(key, values[key]);
-    });
-
-    if (imageFile) {
-      formData.append("profileImage", imageFile);
-    } else if (imageUrl) {
-      // If using existing image (not a new upload)
-      formData.append("profileImageUrl", imageUrl);
+      const res = await profile(formData);
+      console.log(res);
+      if (res?.data?.success) {
+        toast.success(res.data?.message || "Profile updated successfully");
+      }else{
+        toast.error(res.data?.message || "Profile updated failed");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Profile updated failed");
     }
-
-    console.log("FormData created successfully");
-
-    // For displaying in console what would be sent to server
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ": " + pair[1]);
-    }
-
-    // Here you would normally send the formData to your API
-    // axios.post('/api/updateProfile', formData)
-
-    message.success("Profile Updated Successfully!");
   };
 
   const handleImageChange = ({ fileList: newFileList }) => {
@@ -165,15 +156,16 @@ const UserProfile = () => {
                 )}
               </Upload>
             </Form.Item>
-            <h2 className="text-[24px] font-bold">Sabbir Ahmed</h2>
+            <h2 className="text-[24px] font-bold">{userInformation?.name}</h2>
           </div>
 
           {/* Username */}
           <Form.Item
-            name="username"
+            name="name"
             label="Full Name"
             style={{ marginBottom: 0 }}
-            rules={[{ required: true, message: "Please enter your username" }]}
+            initialValue={userInformation?.name}
+            rules={[{ required: true, message: "Please enter your name" }]}
           >
             <Input
               placeholder="Enter your Username"
@@ -191,6 +183,7 @@ const UserProfile = () => {
             name="email"
             label="Email"
             style={{ marginBottom: 0 }}
+            initialValue={userInformation?.email}
             rules={[
               { required: true, message: "Please enter your email" },
               { type: "email", message: "Please enter a valid email" },
@@ -209,15 +202,15 @@ const UserProfile = () => {
             />
           </Form.Item>
 
-          {/* Username */}
           <Form.Item
             name="contact"
             label="Contact Number"
             style={{ marginBottom: 0 }}
-            rules={[{ required: true, message: "Please enter your username" }]}
+            initialValue={userInformation?.contact}
+            rules={[{ required: true, message: "Please enter your contact" }]}
           >
             <Input
-              placeholder="Enter your Username"
+              placeholder="Enter your contact"
               style={{
                 height: "45px",
                 backgroundColor: "#f7f7f7",
@@ -226,46 +219,6 @@ const UserProfile = () => {
               }}
             />
           </Form.Item>
-
-          {/* Address */}
-          {/* <Form.Item
-            name="address"
-            label="Address"
-            style={{ marginBottom: 0 }}
-            rules={[{ required: true, message: "Please enter your address" }]}
-          >
-            <Input
-              placeholder="Enter your Address"
-              style={{
-                height: "45px",
-                backgroundColor: "#f7f7f7",
-                borderRadius: "8px",
-                outline: "none",
-              }}
-            />
-          </Form.Item> */}
-
-          {/* Language */}
-          {/* <Form.Item
-            name="language"
-            label="Language"
-            style={{ marginBottom: 0 }}
-            rules={[{ required: true, message: "Please select your language" }]}
-          >
-            <Select
-              placeholder="Select your Language"
-              style={{
-                height: "45px",
-                backgroundColor: "#f7f7f7",
-                borderRadius: "8px",
-                border: "1px solid #E0E4EC", // Custom border for language
-              }}
-            >
-              <Option value="english">English</Option>
-              <Option value="french">French</Option>
-              <Option value="spanish">Spanish</Option>
-            </Select>
-          </Form.Item> */}
 
           {/* Update Profile Button */}
           <div className="col-span-2 text-end mt-6">
@@ -277,15 +230,8 @@ const UserProfile = () => {
                 block
                 style={{ height: 40 }}
               >
-                Save Changes
+                {isLoading ? "Updating..." : "Update Profile"}
               </Button>
-
-              {/* Option 2: Use GradientButton with onClick handler */}
-              {/* 
-              <GradientButton onClick={handleFormSubmit} block>
-                Update Profile
-              </GradientButton>
-              */}
             </Form.Item>
           </div>
         </div>

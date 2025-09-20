@@ -31,8 +31,8 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
 
   const showLogoutConfirm = () => setIsLogoutModalOpen(true);
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("accessToken");
     setIsLogoutModalOpen(false);
     navigate("/auth/login");
   };
@@ -69,7 +69,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           {collapsed ? "" : "Submission Management"}
         </Link>
       ),
-      roles: ["ADMIN"],
+      roles: ["SUPER_ADMIN"],
     },
     {
       key: "/user-management",
@@ -77,7 +77,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       label: (
         <Link to="/user-management">{collapsed ? "" : "User Management"}</Link>
       ),
-      roles: ["ADMIN"],
+      roles: ["SUPER_ADMIN"],
     },
     {
       key: "/upload-documents",
@@ -87,7 +87,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           {collapsed ? "" : "Upload New Documents"}
         </Link>
       ),
-      roles: ["ADMIN"],
+      roles: ["SUPER_ADMIN"],
     },
     {
       key: "/category-management",
@@ -97,13 +97,13 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           {collapsed ? "" : "Category Management"}
         </Link>
       ),
-      roles: ["ADMIN"],
+      roles: ["SUPER_ADMIN"],
     },
     {
       key: "subMenuSetting",
       icon: renderIcon(Settings, "subMenuSetting"),
       label: collapsed ? "" : "Settings",
-      roles: ["ADMIN"],
+      roles: ["SUPER_ADMIN"],
       children: [
         {
           key: "/profile",
@@ -131,12 +131,12 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
       key: "/logout",
       icon: <IoIosLogOut size={24} />,
       label: <p onClick={showLogoutConfirm}>{collapsed ? "" : "Logout"}</p>,
-      roles: ["ADMIN"],
+      roles: ["SUPER_ADMIN"],
     },
   ];
 
   const menuItems = rawMenuItems.filter(
-    (item) => !item.roles || item.roles.includes(user?.role)
+    (item) => !item.role || item.role.includes(user?.role)
   );
 
   useEffect(() => {
@@ -178,6 +178,7 @@ const Sidebar = ({ collapsed, setCollapsed, isMobile }) => {
           <img src={image4} alt="logo" className="w-40 h-40" />
         </Link>
       )}
+      
 
       {/* Menu */}
       <div className="flex-1 overflow-y-auto mt-6">

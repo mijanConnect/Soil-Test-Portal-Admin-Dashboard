@@ -62,7 +62,7 @@ const Auth = () => {
             position: "relative",
             right: 100,
             zIndex: 1,
-            border: "1px solid #198248",
+            // border: "1px solid #198248",
             backdropFilter: "blur(10px)",
           }}
           className="shadow-xl"

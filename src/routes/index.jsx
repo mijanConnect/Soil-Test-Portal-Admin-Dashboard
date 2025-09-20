@@ -67,7 +67,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <PrivateRoute allowedRoles={["ADMIN"]}>
+      <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
         <Main />
       </PrivateRoute>
     ),
@@ -75,7 +75,7 @@ const router = createBrowserRouter([
       {
         path: "/submission-management",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <SubmissionManagement />
           </PrivateRoute>
         ),
@@ -83,7 +83,7 @@ const router = createBrowserRouter([
       {
         path: "/user-management",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <LoginCredentials />
           </PrivateRoute>
         ),
@@ -91,7 +91,7 @@ const router = createBrowserRouter([
       {
         path: "/upload-documents",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <UploadDocument />
           </PrivateRoute>
         ),
@@ -99,7 +99,7 @@ const router = createBrowserRouter([
       {
         path: "/category-management",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <CategoryManagement />
           </PrivateRoute>
         ),
@@ -107,7 +107,7 @@ const router = createBrowserRouter([
       {
         path: "/about-us",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <AboutUs />
           </PrivateRoute>
         ),
@@ -115,7 +115,7 @@ const router = createBrowserRouter([
       {
         path: "/contact",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <Contact />
           </PrivateRoute>
         ),
@@ -123,7 +123,7 @@ const router = createBrowserRouter([
       {
         path: "/privacy-policy",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <PrivacyPolicy />
           </PrivateRoute>
         ),
@@ -131,7 +131,7 @@ const router = createBrowserRouter([
       {
         path: "/terms-and-conditions",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <TermsAndConditions />
           </PrivateRoute>
         ),
@@ -139,7 +139,7 @@ const router = createBrowserRouter([
       {
         path: "/faq",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <FAQSection />
           </PrivateRoute>
         ),
@@ -147,7 +147,7 @@ const router = createBrowserRouter([
       {
         path: "/profile",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <AdminProfile />
           </PrivateRoute>
         ),
@@ -155,7 +155,7 @@ const router = createBrowserRouter([
       {
         path: "/notification",
         element: (
-          <PrivateRoute allowedRoles={["ADMIN"]}>
+          <PrivateRoute allowedRoles={["SUPER_ADMIN"]}>
             <Notifications />
           </PrivateRoute>
         ),

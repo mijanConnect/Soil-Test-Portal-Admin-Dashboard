@@ -1,55 +1,51 @@
 import { Button, Checkbox, Form, Input } from "antd";
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import FormItem from "../../components/common/FormItem";
 import image4 from "../../assets/image4.png";
 import googleIcon from "../../assets/google-icon.png";
 import { useUser } from "../../provider/User";
-
+import { useLoginMutation } from "../../redux/apiSlices/authSlice";
+import toast from "react-hot-toast";
 // ✅ Dummy users
-const dummyUsers = [
-  {
-    email: "admin@example.com",
-    password: "admin123",
-    role: "ADMIN",
-  },
-  {
-    email: "user@example.com",
-    password: "user123",
-    role: "USER",
-  },
-  {
-    email: "employee@example.com",
-    password: "employee123",
-    role: "EMPLOYEE",
-  },
-];
+// const dummyUsers = [
+//   {
+//     email: "admin@example.com",
+//     password: "admin123",
+//     role: "ADMIN",
+//   },
+//   {
+//     email: "user@example.com",
+//     password: "user123",
+//     role: "USER",
+//   },
+//   {
+//     email: "employee@example.com",
+//     password: "employee123",
+//     role: "EMPLOYEE",
+//   },
+// ];
 
 const Login = () => {
+  const [login, { isLoading, isError }] = useLoginMutation();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
-  const { setUser } = useUser(); // 👈 use context
+  const { setUser } = useUser();
 
   const onFinish = async (values) => {
-    const { email, password } = values;
-
-    const foundUser = dummyUsers.find(
-      (u) => u.email === email && u.password === password
-    );
-
-    if (!foundUser) {
-      setError("Invalid email or password");
-      return;
+    try {
+      const res = await login(values).unwrap();
+      console.log(res);
+      if (res.success) {
+        navigate("/submission-management");
+        // setUser(res.data);
+        localStorage.setItem("accessToken", res.data.accessToken);
+        toast.success(res.message);
+      } else {
+        toast.error(res?.message);
+      }
+    } catch (error) {
+      toast.error(error?.data?.message);
     }
-
-    // ✅ Save user in localStorage
-    localStorage.setItem("user", JSON.stringify(foundUser));
-
-    // ✅ Update context immediately
-    setUser(foundUser);
-
-    // Navigate after login
-    navigate("/submission-management");
   };
 
   return (
@@ -94,11 +90,11 @@ const Login = () => {
           />
         </Form.Item>
 
-        {error && (
+        {isError && (
           <p
             style={{ color: "red", marginBottom: "10px", textAlign: "center" }}
           >
-            {error}
+            {isError}
           </p>
         )}
 
