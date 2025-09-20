@@ -1,60 +1,62 @@
 import { api } from "../api/baseApi";
 
-
 const categorySlice = api.injectEndpoints({
-    endpoints: (builder)=>({
-        createCategory: builder.mutation({
-            query: (categoryData)=> {
-                return{
-                    url: "/category/create-category",
-                    method: "POST",
-                    body: categoryData,
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-        updateCategory: builder.mutation({
-            query: ({ id, updatedData})=> {
-                return{
-                    url: `/category/update-category/${id}`,
-                    method: "PATCH",
-                    body: updatedData,
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-        deleteCategory: builder.mutation({
-            query: (id)=> {
-                return{
-                    url: `/category/delete-category/${id}`,
-                    method: "DELETE",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-        category: builder.query({
-            query: ()=> {
-                return{
-                    url: "/category/get-category",
-                    method: "GET",
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
-                }
-            }
-        }),
-    })
-})
+  endpoints: (builder) => ({
+    getAllCategory: builder.query({
+      query: ({ page, limit, search }) => {
+        return {
+          url: "/category",
+          method: "GET",
+          params: {
+            page, // Page number
+            limit, // Number of items per page
+            searchTerm: search, // Search term (if any)
+          },
+        };
+      },
+    }),
+    createCategory: builder.mutation({
+      query: (categoryData) => {
+        return {
+          url: "/category",
+          method: "POST",
+          body: categoryData,
+        };
+      },
+    }),
+    updateCategory: builder.mutation({
+      query: ({ id, updatedData }) => {
+        return {
+          url: `/category/${id}`,
+          method: "PATCH",
+          body: updatedData,
+        };
+      },
+    }),
+    deleteCategory: builder.mutation({
+      query: (id) => {
+        return {
+          url: `/category/${id}`,
+          method: "DELETE",
+        };
+      },
+    }),
+    // get all category for super admin
+    getAllCategoryForSuperAdmin: builder.query({
+      query: () => {
+        return {
+          url: "/category/all",
+          method: "GET",
+        };
+      },
+    }),
+  }),
+});
 
 export const {
-    useCategoryQuery,
-    useCreateCategoryMutation,
-    useUpdateCategoryMutation,
-    useDeleteCategoryMutation
+  useGetAllCategoryQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+  useGetAllCategoryForSuperAdminQuery,
 } = categorySlice;

@@ -6,7 +6,7 @@ const authSlice = api.injectEndpoints({
       query: (data) => {
         return {
           method: "POST",
-          url: "/auth/otp-verify",
+          url: "/auth/verify-email",
           body: data,
         };
       },
@@ -21,10 +21,6 @@ const authSlice = api.injectEndpoints({
       },
       transformResponse: (data) => {
         return data;
-      },
-      transformErrorResponse: ({ data }) => {
-        const { message } = data;
-        return message;
       },
     }),
     forgotPassword: builder.mutation({
@@ -51,11 +47,6 @@ const authSlice = api.injectEndpoints({
           method: "POST",
           url: "/auth/change-password",
           body: data,
-          headers: {
-            Authorization: `Bearer ${JSON.parse(
-              localStorage.getItem("token")
-            )}`,
-          },
         };
       },
     }),
@@ -63,33 +54,19 @@ const authSlice = api.injectEndpoints({
     updateProfile: builder.mutation({
       query: (data) => {
         return {
-          method: "POST",
-          url: "/auth/update-profile",
+          method: "PATCH",
+          url: "/user",
           body: data,
-          headers: {
-            Authorization: `Bearer ${JSON.parse(
-              localStorage.getItem("token")
-            )}`,
-          },
         };
       },
     }),
 
     profile: builder.query({
-      query: () => {
-        return {
-          method: "GET",
-          url: "/auth/get-profile",
-          headers: {
-            Authorization: `Bearer ${JSON.parse(
-              localStorage.getItem("token")
-            )}`,
-          },
-        };
-      },
-      transformResponse: ({ user }) => {
-        return user;
-      },
+      query: () => ({
+        method: "GET",
+        url: "/user/profile",
+      }),
+      providesTags: ["Auth"],
     }),
   }),
 });

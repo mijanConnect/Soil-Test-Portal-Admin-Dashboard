@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -7,114 +7,52 @@ import {
   Input,
   Tooltip,
   Switch,
-  Select,
   Row,
   Col,
+  Select,
+  Spin,
 } from "antd";
 import { FaTrash } from "react-icons/fa";
 import { EditOutlined } from "@ant-design/icons";
 import Swal from "sweetalert2";
+import {
+  useDeleteUserMutation,
+  useGetAllUserQuery,
+  useUpdateUserMutation,
+} from "../../redux/apiSlices/dashboardSlice";
+import AddUserModal from "../AddUserModal/AddUserModal";
 
 const { Option } = Select;
 
-const components = {
-  header: {
-    row: (props) => (
-      <tr
-        {...props}
-        style={{
-          backgroundColor: "#f0f5f9",
-          height: "50px",
-          color: "secondary",
-          fontSize: "18px",
-          textAlign: "center",
-          padding: "12px",
-        }}
-      />
-    ),
-    cell: (props) => (
-      <th
-        {...props}
-        style={{
-          color: "secondary",
-          fontWeight: "bold",
-          fontSize: "18px",
-          textAlign: "center",
-          padding: "12px",
-        }}
-      />
-    ),
-  },
-};
-
+// Main LoginCredentials Component
 const LoginCredentials = () => {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice@email.com",
-      password: "123456",
-      phone: "+1234567890",
-      role: "Admin",
-      createdAt: "2025-08-01",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      email: "john@email.com",
-      password: "123456",
-      phone: "+9876543210",
-      role: "User",
-      createdAt: "2025-08-05",
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      name: "Sophia Williams",
-      email: "sophia@email.com",
-      password: "123456",
-      phone: "+1122334455",
-      role: "Employee",
-      createdAt: "2025-08-08",
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Michael Brown",
-      email: "michael@email.com",
-      password: "123456",
-      phone: "+2233445566",
-      role: "User",
-      createdAt: "2025-08-12",
-      status: "Inactive",
-    },
-    {
-      id: 5,
-      name: "Emma Davis",
-      email: "emma@email.com",
-      password: "123456",
-      phone: "+3344556677",
-      role: "Admin",
-      createdAt: "2025-08-15",
-      status: "Active",
-    },
-  ]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchText, setSearchText] = useState("");
+  const [isUserModalVisible, setIsUserModalVisible] = useState(false);
+  const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation();
+  const [deleteUser, { isLoading: isDeletingUser }] = useDeleteUserMutation();
 
-  const [roles, setRoles] = useState(["Admin", "User"]); // Default roles
+  // Fetch users
+  const {
+    data: usersResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllUserQuery({ page, limit, search: searchText });
 
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchText]);
+
+  const allUsers = usersResponse?.data || [];
+  const paginationData = usersResponse?.pagination || { total: 0 };
+
+  // Modal & Form states for edit/view
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [viewForm] = Form.useForm();
-  const [searchText, setSearchText] = useState("");
-
-  const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
-  const [roleForm] = Form.useForm();
-
-  const [isUserModalVisible, setIsUserModalVisible] = useState(false);
-  const [userForm] = Form.useForm();
-
-  // View/Edit User Modal
   const showViewModal = (record) => {
     setSelectedRecord(record);
     viewForm.setFieldsValue(record);
@@ -126,76 +64,120 @@ const LoginCredentials = () => {
     setSelectedRecord(null);
   };
 
-  const handleUpdateRecord = () => {
-    viewForm.validateFields().then((values) => {
-      setData((prev) =>
-        prev.map((item) =>
-          item.id === selectedRecord.id ? { ...item, ...values } : item
-        )
-      );
-      Swal.fire({
-        title: "Updated!",
-        text: "User details have been updated successfully.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      setIsViewModalVisible(false);
-    });
+  const handleUpdateRecord = async () => {
+    try {
+      const values = await viewForm.validateFields();
+      const payload = { ...values, id: selectedRecord._id };
+
+      if (typeof payload !== "object") {
+        throw new Error("Payload is not an object");
+      }
+
+      const res = await updateUser(payload);
+
+      if (res.data.success) {
+        Swal.fire({
+          title: "Updated!",
+          text: "User details have been updated successfully.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        setIsViewModalVisible(false);
+        refetch();
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: "Failed to update user.",
+          icon: "error",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    } catch (err) {
+      console.log("Validation Failed:", err);
+    }
   };
 
-  // Add Role
-  const handleAddRole = () => {
-    roleForm.validateFields().then((values) => {
-      setRoles((prev) => [...prev, values.roleName]);
-      Swal.fire({
-        title: "Role Added!",
-        text: `Role "${values.roleName}" has been successfully added.`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      roleForm.resetFields();
-      setIsRoleModalVisible(false);
-    });
-  };
-
-  // Add New User
-  const handleAddUser = () => {
-    userForm.validateFields().then((values) => {
-      const newUser = {
-        id: data.length + 1,
-        status: "Active",
-        createdAt: new Date().toISOString().split("T")[0],
-        ...values,
+  const deleteUserFromRecord = async (record) => {
+    try {
+      const payload = {
+        id: record._id,
       };
-      setData((prev) => [...prev, newUser]);
-      Swal.fire({
-        title: "User Added!",
-        text: `${values.name} has been added successfully.`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      userForm.resetFields();
-      setIsUserModalVisible(false);
-    });
+      const res = await deleteUser(payload);
+      if (res.data.success) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "User has been deleted.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        refetch();
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: "Failed to delete user.",
+          icon: "error",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      console.log("Validation Failed:", error);
+    }
+  };
+
+  const updateUserStatus = async (record) => {
+    try {
+      if (!record || !record._id) {
+        throw new Error("User record is missing or invalid");
+      }
+
+      // Toggle the current status
+      const payload = {
+        id: record._id,
+        isDeleted: !record.isDeleted,
+      };
+
+      const res = await updateUser(payload);
+
+      if (res?.data?.success) {
+        Swal.fire({
+          title: "Updated!",
+          text: `Status has been changed successfully.`,
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        refetch();
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: "Failed to change status.",
+          icon: "error",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const columns = [
-    { title: "SL", dataIndex: "id", key: "id", align: "center" },
+    {
+      title: "SL",
+      key: "index",
+      align: "center",
+      render: (_, __, index) => (page - 1) * limit + index + 1,
+    },
     { title: "User Name", dataIndex: "name", key: "name", align: "center" },
     { title: "Email", dataIndex: "email", key: "email", align: "center" },
     {
-      title: "Password",
-      dataIndex: "password",
-      key: "password",
-      align: "center",
-    },
-    {
       title: "Phone Number",
-      dataIndex: "phone",
-      key: "phone",
+      dataIndex: "contact",
+      key: "contact",
       align: "center",
     },
     { title: "Role", dataIndex: "role", key: "role", align: "center" },
@@ -204,18 +186,15 @@ const LoginCredentials = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       align: "center",
+      render: (text) => new Date(text).toLocaleDateString(),
     },
-    { title: "Status", dataIndex: "status", key: "status", align: "center" },
     {
       title: "Action",
       key: "action",
       align: "center",
-      width: 120,
+      width: 140,
       render: (_, record) => (
-        <div
-          className="flex gap-4 justify-between align-middle py-[3px] px-[15px] border border-primary rounded-md"
-          style={{ alignItems: "center" }}
-        >
+        <div className="flex gap-4 justify-between items-center py-[3px] px-[15px] border border-primary rounded-md">
           <Tooltip title="View & Update Details">
             <button
               onClick={() => showViewModal(record)}
@@ -227,10 +206,10 @@ const LoginCredentials = () => {
 
           <Tooltip title="Delete">
             <button
-              onClick={() => {
+              onClick={({}) => {
                 Swal.fire({
                   title: "Are you sure?",
-                  text: "You won't be able to revert this!",
+                  text: "You won't be able to delete this user!",
                   icon: "warning",
                   showCancelButton: true,
                   confirmButtonColor: "#3085d6",
@@ -238,12 +217,8 @@ const LoginCredentials = () => {
                   confirmButtonText: "Yes, delete it!",
                 }).then((result) => {
                   if (result.isConfirmed) {
-                    setData(data.filter((item) => item.id !== record.id));
-                    Swal.fire({
-                      title: "Deleted!",
-                      text: "Your record has been deleted.",
-                      icon: "success",
-                    });
+                    // need to delete user function
+                    deleteUserFromRecord(record);
                   }
                 });
               }}
@@ -255,16 +230,11 @@ const LoginCredentials = () => {
 
           <Switch
             size="small"
-            checked={record.status === "Active"}
-            style={{
-              backgroundColor: record.status === "Active" ? "#48B14C" : "gray",
-            }}
-            onChange={(checked) => {
+            checked={!record.isDeleted}
+            onChange={() => {
               Swal.fire({
                 title: "Are you sure?",
-                text: `You are about to change status to ${
-                  checked ? "Active" : "Inactive"
-                }.`,
+                text: "You won't be able to change this user status!",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: "#3085d6",
@@ -272,24 +242,12 @@ const LoginCredentials = () => {
                 confirmButtonText: "Yes, change it!",
               }).then((result) => {
                 if (result.isConfirmed) {
-                  setData((prev) =>
-                    prev.map((item) =>
-                      item.id === record.id
-                        ? { ...item, status: checked ? "Active" : "Inactive" }
-                        : item
-                    )
-                  );
-                  Swal.fire({
-                    title: "Updated!",
-                    text: `Status has been changed to ${
-                      checked ? "Active" : "Inactive"
-                    }.`,
-                    icon: "success",
-                    timer: 1500,
-                    showConfirmButton: false,
-                  });
+                  updateUserStatus(record);
                 }
               });
+            }}
+            style={{
+              backgroundColor: !record.isDeleted ? "#48B14C" : "gray",
             }}
           />
         </div>
@@ -297,334 +255,109 @@ const LoginCredentials = () => {
     },
   ];
 
+  if (isLoading) return <Spin size="large" />;
+  if (error)
+    return <div className="p-4 text-red-500">Failed to load users.</div>;
+
   return (
     <div>
+      {/* Search & Add Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-4">
-        <div>
-          {/* <h1 className="text-[24px] font-bold">User Management</h1>
-          <p className="text-[16px] font-normal mt-2">
-            Access your account securely with your login credentials.
-          </p> */}
-          <div className="!w-[400px]">
-            <Input.Search
-              placeholder="Search"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-              enterButton
-              className="custom-search"
-            />
-          </div>
+        <div className="!w-[400px]">
+          <Input.Search
+            placeholder="Search by name/email"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            allowClear
+            enterButton
+            className="custom-search"
+          />
         </div>
         <div className="flex gap-5">
           <Button
             type="primary"
-            onClick={() => setIsUserModalVisible(true)}
             className="bg-primary !text-white hover:!text-secondary hover:!bg-white hover:!border-primary px-[50px] py-[20px] rounded-lg text-[16px] font-medium"
+            onClick={() => setIsUserModalVisible(true)}
           >
             Add New User
           </Button>
-          {/* <Button
-            type="primary"
-            onClick={() => setIsRoleModalVisible(true)}
-            className="bg-primary !text-white hover:!text-secondary hover:!bg-white hover:!border-primary px-[30px] py-[25px] rounded-full text-[18px] font-bold"
-          >
-            Add New Role
-          </Button> */}
         </div>
       </div>
+
+      {/* Users Table */}
       <div className="overflow-x-auto">
         <Table
-          dataSource={data}
+          dataSource={allUsers}
           columns={columns}
-          pagination={{ pageSize: 10 }}
+          rowKey={(record) => record._id}
+          pagination={{
+            current: page,
+            pageSize: limit,
+            total: paginationData.total,
+            showSizeChanger: true,
+            onChange: (newPage, newPageSize) => {
+              setPage(newPage);
+              setLimit(newPageSize);
+            },
+          }}
           bordered={false}
           size="small"
-          rowClassName="custom-row"
-          components={components}
-          className="custom-table"
           scroll={{ x: "max-content" }}
         />
       </div>
 
       {/* View/Edit User Modal */}
       <Modal
-        visible={isViewModalVisible}
+        open={isViewModalVisible}
         onCancel={handleCloseViewModal}
         width={700}
         onOk={handleUpdateRecord}
+        confirmLoading={isUpdatingUser}
         okText="Save Changes"
       >
         {selectedRecord && (
           <div className="flex flex-col gap-2 w-full rounded-md mb-8">
             <p className="text-[22px] font-bold">Edit User</p>
-            <div className="">
-              <Form form={viewForm} layout="vertical" className="mb-4">
-                <Row gutter={[30, 20]}>
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="name"
-                      label="User Name"
-                      className="custom-form-item-ant"
-                      rules={[
-                        { required: true, message: "Please enter user name" },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Enter User Name"
-                        className="custom-input-ant-modal"
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="email"
-                      label="Email"
-                      className="custom-form-item-ant"
-                      rules={[
-                        { required: true, message: "Please enter email" },
-                        { type: "email", message: "Enter a valid email" },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Enter Email"
-                        className="custom-input-ant-modal"
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="password"
-                      label="Password"
-                      className="custom-form-item-ant"
-                      rules={[
-                        { required: true, message: "Please enter password" },
-                      ]}
-                    >
-                      <Input.Password
-                        placeholder="Enter Password"
-                        className="custom-input-ant-modal"
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="phone"
-                      label="Phone Number"
-                      className="custom-form-item-ant"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please enter phone number",
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder="Enter Phone Number"
-                        className="custom-input-ant-modal"
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="role"
-                      label="Role"
-                      className="custom-form-item-ant-select"
-                      rules={[
-                        { required: true, message: "Please select role" },
-                      ]}
-                    >
-                      <Select
-                        placeholder="Select Role"
-                        className="custom-select-ant-modal"
-                      >
-                        {roles.map((role) => (
-                          <Option key={role} value={role}>
-                            {role}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-
-                  <Col xs={24} sm={12}>
-                    <Form.Item
-                      name="status"
-                      label="Select Page Access Control"
-                      className="custom-form-item-ant-select"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select access level",
-                        },
-                      ]}
-                    >
-                      <Select
-                        placeholder="Select Access Level"
-                        className="custom-select-ant-modal"
-                      >
-                        <Option value="Active">Full</Option>
-                        <Option value="Inactive">Dashboard</Option>
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Form>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Add New Role Modal */}
-      <Modal
-        title="Add New Role"
-        visible={isRoleModalVisible}
-        onCancel={() => setIsRoleModalVisible(false)}
-        onOk={handleAddRole}
-        okText="Add Role"
-      >
-        <Form form={roleForm} layout="vertical">
-          <Form.Item
-            name="roleName"
-            label="Role Name"
-            rules={[{ required: true, message: "Please enter role name" }]}
-          >
-            <Input placeholder="Enter role name" />
-          </Form.Item>
-          <Form.Item name="status" label="Select Page Access Control">
-            <Select>
-              <Option value="Active">Full</Option>
-              <Option value="Inactive">Dashboard</Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Add New User Modal */}
-      <Modal
-        // title="Add New User"
-        visible={isUserModalVisible}
-        onCancel={() => setIsUserModalVisible(false)}
-        onOk={handleAddUser}
-        okText="Add User"
-        width={700}
-      >
-        <div className="flex flex-col gap-2 w-full rounded-md mb-8">
-          <p className="text-[22px] font-bold">Add New User</p>
-          <div>
-            <Form form={userForm} layout="vertical" className="mb-4">
+            <Form form={viewForm} layout="vertical" className="mb-4">
               <Row gutter={[30, 20]}>
                 <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="name"
-                    label="User Name"
-                    className="custom-form-item-ant"
-                    rules={[
-                      { required: true, message: "Please enter user name" },
-                    ]}
-                  >
-                    <Input
-                      placeholder="Enter User Name"
-                      className="custom-input-ant-modal"
-                    />
+                  <Form.Item name="name" label="User Name">
+                    <Input placeholder="Enter User Name" />
                   </Form.Item>
                 </Col>
-
                 <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="email"
-                    label="Email"
-                    className="custom-form-item-ant"
-                    rules={[
-                      { required: true, message: "Please enter email" },
-                      { type: "email", message: "Enter a valid email" },
-                    ]}
-                  >
-                    <Input
-                      placeholder="Enter Email"
-                      className="custom-input-ant-modal"
-                    />
+                  <Form.Item name="email" label="Email">
+                    <Input placeholder="Enter Email" />
                   </Form.Item>
                 </Col>
-
+              </Row>
+              <Row gutter={[30, 20]}>
                 <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="password"
-                    label="Password"
-                    className="custom-form-item-ant"
-                    rules={[
-                      { required: true, message: "Please enter password" },
-                    ]}
-                  >
-                    <Input.Password
-                      placeholder="Enter Password"
-                      className="custom-input-ant-modal"
-                    />
+                  <Form.Item name="contact" label="Contact">
+                    <Input placeholder="Enter Contact" />
                   </Form.Item>
                 </Col>
-
                 <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="phone"
-                    label="Phone Number"
-                    className="custom-form-item-ant"
-                    rules={[
-                      { required: true, message: "Please enter phone number" },
-                    ]}
-                  >
-                    <Input
-                      placeholder="Enter Phone Number"
-                      className="custom-input-ant-modal"
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="role"
-                    label="Role"
-                    className="custom-form-item-ant-select"
-                    rules={[
-                      { required: true, message: "Please select a role" },
-                    ]}
-                  >
-                    <Select
-                      placeholder="Select Role"
-                      className="custom-select-ant-modal"
-                    >
-                      {roles.map((role) => (
-                        <Option key={role} value={role}>
-                          {role}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-
-                <Col xs={24} sm={12}>
-                  <Form.Item
-                    name="status"
-                    label="Select Page Access Control"
-                    className="custom-form-item-ant-select"
-                  >
-                    <Select
-                      placeholder="Select Access Level"
-                      className="custom-select-ant-modal"
-                    >
-                      <Option value="Active">Full</Option>
-                      <Option value="Inactive">Dashboard</Option>
+                  {/* need to add role */}
+                  <Form.Item name="role" label="Role">
+                    <Select placeholder="Select Role">
+                      <Option value="USER">USER</Option>
+                      <Option value="ADMIN">ADMIN</Option>
                     </Select>
                   </Form.Item>
                 </Col>
               </Row>
             </Form>
           </div>
-        </div>
+        )}
       </Modal>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isVisible={isUserModalVisible}
+        onClose={() => setIsUserModalVisible(false)}
+        onUserAdded={refetch}
+      />
     </div>
   );
 };

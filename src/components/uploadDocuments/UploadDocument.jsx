@@ -1,6 +1,12 @@
 import React, { useState } from "react";
-import { Form, Input, Button, Select, Upload, message } from "antd";
+import { Form, Input, Button, Select, Upload, message, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import { useCreateDocumentMutation } from "../../redux/apiSlices/documentSlice";
+import toast from "react-hot-toast";
+import {
+  useGetAllCategoryForSuperAdminQuery,
+  useGetAllCategoryQuery,
+} from "../../redux/apiSlices/categorySlice";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -8,28 +14,38 @@ const { TextArea } = Input;
 const UploadDocument = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
+  // create document api call
+  const [createDocument, { isLoading, error }] = useCreateDocumentMutation();
+  // all category api call
+  const { data: allCategories, isLoading: categoryLoading } =
+    useGetAllCategoryForSuperAdminQuery();
+  if (categoryLoading) return <Spin size="large" />;
 
-  const categories = ["Soil Test", "Marketing", "Finance", "Research"]; // Example categories
-
+  const categories = allCategories?.data;
+  // handle file change
   const handleFileChange = ({ fileList: newFileList }) => {
     setFileList(newFileList);
   };
 
-  const handleSubmit = (values) => {
-    if (fileList.length === 0) {
-      message.error("Please upload at least one file.");
-      return;
+  // submit document
+  const handleSubmit = async (values) => {
+    try {
+      const formData = new FormData();
+      formData.append("title", values.title);
+      formData.append("sortDescription", values.sortDescription);
+      formData.append("category", values.category);
+      formData.append("detailDescription", values.detailDescription);
+      formData.append(
+        "files",
+        fileList.map((file) => file.name)
+      );
+      await createDocument(formData);
+      toast.success("Document uploaded successfully!");
+      form.resetFields();
+      setFileList([]);
+    } catch (error) {
+      toast.error("Failed to upload document");
     }
-
-    const formData = {
-      ...values,
-      files: fileList.map((file) => file.name),
-    };
-
-    console.log("Form Data Submitted:", formData);
-    message.success("Document uploaded successfully!");
-    form.resetFields();
-    setFileList([]);
   };
 
   return (
@@ -93,9 +109,9 @@ const UploadDocument = () => {
                   placeholder="Select category"
                   className="custom-select-ant-modal w-full"
                 >
-                  {categories.map((cat) => (
-                    <Option key={cat} value={cat}>
-                      {cat}
+                  {categories?.map((cat) => (
+                    <Option key={cat._id} value={cat._id}>
+                      {cat.title}
                     </Option>
                   ))}
                 </Select>

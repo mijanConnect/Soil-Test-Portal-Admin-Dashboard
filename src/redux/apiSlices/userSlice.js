@@ -16,9 +16,23 @@ const userSlice = api.injectEndpoints({
                 }
             }
         }),
+        // create user
+        createUser:builder.mutation({
+            query:(data)=>{
+                return{
+                    url: `/user`,
+                    method: "POST",
+                    body:data,
+                    // headers:{
+                    //     Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
+                    // }
+                }
+            }
+        })
     })
 })
 
 export const {
-    useUsersQuery
+    useUsersQuery,
+    useCreateUserMutation
 } = userSlice;

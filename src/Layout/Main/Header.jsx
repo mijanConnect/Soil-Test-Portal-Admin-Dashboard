@@ -4,17 +4,21 @@ import { Badge, Button, Dropdown, Menu, Modal, List } from "antd";
 import { IoIosLogOut } from "react-icons/io";
 import Avatar from "../../assets/avatar.png";
 import { Link, useNavigate } from "react-router-dom";
+import { useProfileQuery } from "../../redux/apiSlices/authSlice";
+import { getImageUrl } from "../../components/common/imageUrl";
 
 const Header = ({ toggleSidebar, isMobile }) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const { data } = useProfileQuery();
+  const userInformation = data?.data;
   const navigate = useNavigate();
 
   const showLogoutConfirm = () => setIsLogoutModalOpen(true);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    // localStorage.removeItem("user");
     setIsLogoutModalOpen(false);
     window.location.href = "/auth/login";
   };
@@ -81,15 +85,17 @@ const Header = ({ toggleSidebar, isMobile }) => {
           <div className="flex items-center gap-3 cursor-pointer">
             <div className="flex flex-row gap-1">
               <p>Hello,</p>
-              <p className="text-[16px] font-semibold">Sabbir</p>
+              <p className="text-[16px] font-semibold">{userInformation?.name}</p>
             </div>
             <img
               style={{
                 clipPath: "circle()",
                 width: 45,
                 height: 45,
+                objectFit: "cover",
               }}
-              src={Avatar}
+              // src={getImageUrl(userInformation?.image || userInformation?.profile) || "https://cdn.vectorstock.com/i/1000v/11/10/admin-profile-icon-gear-cog-vector-25811110.jpg"}
+              src={getImageUrl("https://cdn.vectorstock.com/i/1000v/11/10/admin-profile-icon-gear-cog-vector-25811110.jpg")}
               alt="profile-pic"
               className="clip"
             />
