@@ -3,10 +3,7 @@ import { Form, Input, Button, Select, Upload, message, Spin } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useCreateDocumentMutation } from "../../redux/apiSlices/documentSlice";
 import toast from "react-hot-toast";
-import {
-  useGetAllCategoryForSuperAdminQuery,
-  useGetAllCategoryQuery,
-} from "../../redux/apiSlices/categorySlice";
+import { useGetAllCategoryForSuperAdminQuery } from "../../redux/apiSlices/categorySlice";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -35,12 +32,19 @@ const UploadDocument = () => {
       formData.append("sortDescription", values.sortDescription);
       formData.append("category", values.category);
       formData.append("detailDescription", values.detailDescription);
-      formData.append(
-        "files",
-        fileList.map((file) => file.name)
-      );
-      await createDocument(formData);
-      toast.success("Document uploaded successfully!");
+
+      fileList.forEach((file) => {
+        formData.append("document", file.originFileObj);
+      });
+
+      const res = await createDocument(formData).unwrap();
+
+      if (res?.success) {
+        toast.success("Document uploaded successfully!");
+      } else {
+        toast.error(res?.message || "Failed to upload");
+      }
+
       form.resetFields();
       setFileList([]);
     } catch (error) {
@@ -79,7 +83,7 @@ const UploadDocument = () => {
 
               <Form.Item
                 label="Short Description"
-                name="shortDescription"
+                name="sortDescription"
                 className="custom-form-item-ant"
                 rules={[
                   {
@@ -119,7 +123,7 @@ const UploadDocument = () => {
 
               <Form.Item
                 label="File upload (PDF/images)"
-                name="file"
+                name="document"
                 className="custom-form-item-ant"
                 rules={[{ required: true, message: "Please upload a file" }]}
               >
@@ -147,7 +151,7 @@ const UploadDocument = () => {
           {/* Detailed Description */}
           <Form.Item
             label="Detailed Description"
-            name="detailedDescription"
+            name="detailDescription"
             className="custom-form-item-ant mt-6"
             rules={[
               { required: true, message: "Please enter detailed description" },

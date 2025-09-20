@@ -3,11 +3,11 @@ const documentSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     // create document
     createDocument: builder.mutation({
-      query: (data) => {
+      query: (formData) => {
         return {
           method: "POST",
           url: "/document/upload",
-          body: data,
+          body: formData,
         };
       },
     }),
