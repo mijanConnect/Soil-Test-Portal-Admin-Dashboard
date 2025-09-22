@@ -24,6 +24,36 @@ import AddUserModal from "../AddUserModal/AddUserModal";
 
 const { Option } = Select;
 
+const components = {
+  header: {
+    row: (props) => (
+      <tr
+        {...props}
+        style={{
+          backgroundColor: "#f0f5f9",
+          height: "50px",
+          color: "secondary",
+          fontSize: "18px",
+          textAlign: "center",
+          padding: "12px",
+        }}
+      />
+    ),
+    cell: (props) => (
+      <th
+        {...props}
+        style={{
+          color: "secondary",
+          fontWeight: "bold",
+          fontSize: "18px",
+          textAlign: "center",
+          padding: "12px",
+        }}
+      />
+    ),
+  },
+};
+
 // Main LoginCredentials Component
 const LoginCredentials = () => {
   const [page, setPage] = useState(1);
@@ -255,7 +285,12 @@ const LoginCredentials = () => {
     },
   ];
 
-  if (isLoading) return <Spin size="large" />;
+  if (isLoading)
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-100px)]">
+        <Spin size="large" />
+      </div>
+    );
   if (error)
     return <div className="p-4 text-red-500">Failed to load users.</div>;
 
@@ -289,19 +324,20 @@ const LoginCredentials = () => {
         <Table
           dataSource={allUsers}
           columns={columns}
-          rowKey={(record) => record._id}
           pagination={{
-            current: page,
-            pageSize: limit,
-            total: paginationData.total,
-            showSizeChanger: true,
-            onChange: (newPage, newPageSize) => {
-              setPage(newPage);
-              setLimit(newPageSize);
+            current: page, // Set current page from state
+            pageSize: limit, // Set page size (limit) from state
+            total: paginationData.total, // Get the total from API response
+            onChange: (page, pageSize) => {
+              setPage(page); // Update the page state when the page changes
+              setLimit(pageSize); // Update the pageSize (limit) if user changes it
             },
           }}
           bordered={false}
           size="small"
+          rowClassName="custom-row"
+          components={components}
+          className="custom-table"
           scroll={{ x: "max-content" }}
         />
       </div>

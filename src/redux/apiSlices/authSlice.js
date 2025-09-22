@@ -59,6 +59,7 @@ const authSlice = api.injectEndpoints({
           body: data,
         };
       },
+      invalidatesTags: ["Auth"],
     }),
 
     profile: builder.query({

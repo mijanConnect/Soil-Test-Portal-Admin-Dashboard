@@ -21,9 +21,14 @@ const documentSlice = api.injectEndpoints({
 
     // get document for super admin and admin
     getDocumentForAdmin: builder.query({
-      query: () => ({
+      query: ({ page = 1, limit = 10, search = "" }) => ({
         method: "GET",
         url: "/document/all",
+        params: {
+          page,
+          limit,
+          searchTerm: search,
+        },
       }),
     }),
 

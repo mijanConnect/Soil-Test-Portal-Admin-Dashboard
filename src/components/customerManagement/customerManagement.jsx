@@ -37,44 +37,7 @@ const components = {
 };
 
 const CustomerManagement = () => {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      name: "Alice Johnson",
-      image: "https://i.ibb.co/8gh3mqPR/Ellipse-48-1.jpg",
-      email: "example@email.com",
-      retailer: 5,
-      sales: "300",
-      status: "Active",
-      phone: "+1234567890",
-      location: "New York",
-      businessName: "Alice's Store",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      image: "https://i.ibb.co/8gh3mqPR/Ellipse-48-1.jpg",
-      email: "john@email.com",
-      retailer: 3,
-      sales: "500",
-      status: "Inactive",
-      phone: "+9876543210",
-      location: "California",
-      businessName: "John's Shop",
-    },
-    {
-      id: 3,
-      name: "John",
-      image: "https://i.ibb.co/8gh3mqPR/Ellipse-48-1.jpg",
-      email: "john@email.com",
-      retailer: 3,
-      sales: "500",
-      status: "Active",
-      phone: "+9876543210",
-      location: "California",
-      businessName: "John's Shop",
-    },
-  ]);
+
 
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -154,66 +117,7 @@ const CustomerManagement = () => {
       align: "center",
       with: 120,
       render: (_, record) => (
-        // <div className="flex items-center justify-center">
-        //   <div className="flex gap-2 border border-primary rounded-md p-1">
-        //     <Button
-        //       className="bg-primary !text-white hover:!text-black"
-        //       onClick={() => {
-        //         Swal.fire({
-        //           title: "Are you sure?",
-        //           text: "Do you want to accept this sales rep?",
-        //           icon: "question",
-        //           showCancelButton: true,
-        //           confirmButtonColor: "#3085d6",
-        //           cancelButtonColor: "#d33",
-        //           confirmButtonText: "Yes, accept",
-        //         }).then((result) => {
-        //           if (result.isConfirmed) {
-        //             Swal.fire({
-        //               title: "Accepted!",
-        //               text: "The sales rep has been accepted.",
-        //               icon: "success",
-        //               timer: 1500,
-        //               showConfirmButton: false,
-        //             });
-        //             // TODO: Add your actual accept logic here
-        //           }
-        //         });
-        //       }}
-        //     >
-        //       Accept
-        //     </Button>
-
-        //     <Button
-        //       className="bg-red-600 !text-white hover:!text-black"
-        //       onClick={() => {
-        //         Swal.fire({
-        //           title: "Are you sure?",
-        //           text: "Do you want to reject this sales rep?",
-        //           icon: "warning",
-        //           showCancelButton: true,
-        //           confirmButtonColor: "#3085d6",
-        //           cancelButtonColor: "#d33",
-        //           confirmButtonText: "Yes, reject",
-        //         }).then((result) => {
-        //           if (result.isConfirmed) {
-        //             Swal.fire({
-        //               title: "Rejected!",
-        //               text: "The sales rep has been rejected.",
-        //               icon: "success",
-        //               timer: 1500,
-        //               showConfirmButton: false,
-        //             });
-        //             // TODO: Add your actual reject logic here
-        //           }
-        //         });
-        //       }}
-        //     >
-        //       Reject
-        //     </Button>
-        //   </div>
-        // </div>
-
+        
         <div
           className="flex gap-2 justify-between align-middle py-[7px] px-[15px] border border-primary rounded-md"
           style={{ alignItems: "center" }}

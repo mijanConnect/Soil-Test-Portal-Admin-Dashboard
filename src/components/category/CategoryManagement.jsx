@@ -78,7 +78,11 @@ const CategoryManagement = () => {
 
   // Handle loading state
   if (isLoading) {
-    return <Spin size="large" />;
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-100px)]">
+        <Spin size="large" />
+      </div>
+    );
   }
 
   // Handle error state
