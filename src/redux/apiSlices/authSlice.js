@@ -68,6 +68,7 @@ const authSlice = api.injectEndpoints({
       }),
       providesTags: ["Auth"],
     }),
+    
   }),
 });
 

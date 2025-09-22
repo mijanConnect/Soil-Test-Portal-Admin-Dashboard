@@ -32,10 +32,12 @@ const UserProfile = () => {
   useEffect(() => {
     // Set initial values
     form.setFieldsValue(userInformation);
-  
+
     // Set profile image if exists
     if (userInformation?.profile || userInformation?.image) {
-      const fullImageUrl = getImageUrl(userInformation?.profile || userInformation?.image); 
+      const fullImageUrl = getImageUrl(
+        userInformation?.profile || userInformation?.image
+      );
       setImageUrl(fullImageUrl);
       setFileList([
         {
@@ -60,7 +62,6 @@ const UserProfile = () => {
     return <Loader />;
   }
 
-
   const onFinish = async (values) => {
     try {
       const imageFile = fileList.length > 0 ? fileList[0].originFileObj : null;
@@ -72,7 +73,7 @@ const UserProfile = () => {
       console.log(res);
       if (res?.data?.success) {
         toast.success(res.data?.message || "Profile updated successfully");
-      }else{
+      } else {
         toast.error(res.data?.message || "Profile updated failed");
       }
     } catch (err) {
