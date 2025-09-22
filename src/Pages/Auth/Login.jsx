@@ -133,26 +133,6 @@ const Login = () => {
           </button>
         </Form.Item>
       </Form>
-      <Form.Item style={{ marginBottom: 0 }}>
-        <button
-          htmlType="submit"
-          type="submit"
-          style={{
-            width: "100%",
-            height: 45,
-            color: "#1E1E1E",
-            fontWeight: "400px",
-            fontSize: "18px",
-            marginTop: 20,
-            borderRadius: "200px",
-            border: "1px solid #48B14C",
-          }}
-          className="flex items-center justify-center rounded-lg"
-        >
-          <img src={googleIcon} alt="Google logo" className="mr-[12px]" />
-          Sign in with Google
-        </button>
-      </Form.Item>
       <div className="mt-[20px]">
         <p className="text-center text-[#1E1E1E]">
           Don't have an account?{" "}

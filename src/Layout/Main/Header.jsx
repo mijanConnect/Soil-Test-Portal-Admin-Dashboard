@@ -10,7 +10,7 @@ import { getImageUrl } from "../../components/common/imageUrl";
 const Header = ({ toggleSidebar, isMobile }) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
-  const { data } = useProfileQuery();
+  const { data, isLoading } = useProfileQuery();
   const userInformation = data?.data;
   const navigate = useNavigate();
 
@@ -94,8 +94,8 @@ const Header = ({ toggleSidebar, isMobile }) => {
                 height: 45,
                 objectFit: "cover",
               }}
-              // src={getImageUrl(userInformation?.image || userInformation?.profile) || "https://cdn.vectorstock.com/i/1000v/11/10/admin-profile-icon-gear-cog-vector-25811110.jpg"}
-              src={getImageUrl("https://cdn.vectorstock.com/i/1000v/11/10/admin-profile-icon-gear-cog-vector-25811110.jpg")}
+              src={getImageUrl(userInformation?.image || userInformation?.profile) || "https://cdn.vectorstock.com/i/1000v/11/10/admin-profile-icon-gear-cog-vector-25811110.jpg"}
+              // src={getImageUrl("https://cdn.vectorstock.com/i/1000v/11/10/admin-profile-icon-gear-cog-vector-25811110.jpg")}
               alt="profile-pic"
               className="clip"
             />

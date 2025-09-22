@@ -16,6 +16,12 @@ import { useProfileQuery } from "../../redux/apiSlices/authSlice";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const SubmissionManagement = () => {
+  // Local state for pagination
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+
+  // Local state for searchText
+  const [searchText, setSearchText] = useState(""); // Initialize searchText
+
   // API calls
   const {
     data,
@@ -23,26 +29,28 @@ const SubmissionManagement = () => {
     isFetching,
     refetch: refetchAdmin,
   } = useGetAllDocumentsQuery();
+  
   const { data: profileData, isLoading: profileLoading } = useProfileQuery();
+  
   const {
     data: adminData,
     isLoading: adminLoading,
     isFetching: adminFetching,
     refetch: refetchAdminData,
-  } = useGetDocumentForAdminQuery();
+  } = useGetDocumentForAdminQuery({
+    page: pagination.current || 1, // Fallback to 1 if pagination is not initialized
+    limit: pagination.pageSize || 10, // Fallback to 10 if pagination is not initialized
+    search: searchText || "", // Ensure searchText is always a valid string
+  });
 
-  const [deleteDocument, { isLoading: deleteLoading }] =
-    useDeleteDocumentMutation();
-  const [updateDocumentStatus, { isLoading: updateLoading }] =
-    useUpdateDocumentStatusMutation();
+  const [deleteDocument, { isLoading: deleteLoading }] = useDeleteDocumentMutation();
+  const [updateDocumentStatus, { isLoading: updateLoading }] = useUpdateDocumentStatusMutation();
 
   // Local state
   const [activeTab, setActiveTab] = useState("myDocuments");
   const [numPages, setNumPages] = useState(null);
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const [searchText, setSearchText] = useState("");
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   // Show loader while initial data loading
   if (isLoading || profileLoading || adminLoading) {
@@ -81,6 +89,7 @@ const SubmissionManagement = () => {
     setSelectedRecord(record);
     setIsViewModalVisible(true);
   };
+
   const handleCloseViewModal = () => {
     setIsViewModalVisible(false);
     setSelectedRecord(null);
@@ -303,13 +312,15 @@ const SubmissionManagement = () => {
         </div>
       </div>
 
-      {/*  Table */}
-      
+      {/* Table */}
       <Table
         dataSource={currentData}
         columns={columns}
-        pagination={pagination}
-        onChange={(p) => setPagination(p)}
+        pagination={{
+          ...pagination,
+          total: adminData?.total, // Add total count for paginated data
+          onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+        }}
         rowKey={(record) => record._id}
         size="small"
         loading={isFetching || adminFetching || deleteLoading || updateLoading}
@@ -332,9 +343,7 @@ const SubmissionManagement = () => {
           <div className="flex flex-col">
             <div className="bg-primary text-white flex justify-between items-center px-6 py-4">
               <div>
-                <h2 className="text-xl font-semibold">
-                  {selectedRecord.title}
-                </h2>
+                <h2 className="text-xl font-semibold">{selectedRecord.title}</h2>
                 <p className="text-sm mt-1">
                   <strong>User:</strong> {selectedRecord.user?.name} |{" "}
                   <strong>Category:</strong> {selectedRecord.category?.title}

@@ -59,6 +59,7 @@ const authSlice = api.injectEndpoints({
           body: data,
         };
       },
+      invalidatesTags: ["Auth"],
     }),
 
     profile: builder.query({
@@ -68,6 +69,7 @@ const authSlice = api.injectEndpoints({
       }),
       providesTags: ["Auth"],
     }),
+    
   }),
 });
 
