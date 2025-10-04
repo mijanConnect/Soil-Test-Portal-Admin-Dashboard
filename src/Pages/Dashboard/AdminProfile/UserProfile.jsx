@@ -28,7 +28,8 @@ const UserProfile = () => {
   const [profile, { isLoading, error }] = useUpdateProfileMutation();
 
   // Dummy data (to be used as the default data)
-  const userInformation = data?.data;
+  const userInformation = data?.data || [];
+  console.log("User Information=================>:", userInformation);
   useEffect(() => {
     // Set initial values
     form.setFieldsValue(userInformation);
@@ -53,7 +54,7 @@ const UserProfile = () => {
   // Clean up blob URLs when component unmounts to prevent memory leaks
   useEffect(() => {
     return () => {
-      if (imageUrl && imageUrl.startsWith("blob:")) {
+      if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
       }
     };
