@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     // host: "10.10.7.46",
     // host: "193.46.198.251",
-    host: "https://admin.agritecint.com",
+    host: "0.0.0.0",
     port: 3001,
   },
 });
